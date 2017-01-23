@@ -1,0 +1,32 @@
+{
+  "name": "wochat-server",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "bcrypt": "^1.0.2",
+    "bluebird": "^3.4.7",
+    "body-parser": "~1.15.2",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.2.0",
+    "express": "~4.14.0",
+    "include-all": "^2.0.0",
+    "jsonwebtoken": "^7.2.1",
+    "less-middleware": "~2.2.0",
+    "lodash": "^4.17.4",
+    "mongoose": "^4.7.7",
+    "morgan": "~1.7.0",
+    "passport": "^0.3.2",
+    "passport-jwt": "^2.2.1",
+    "passport-local": "^1.0.0",
+    "pug": "~2.0.0-beta6",
+    "serve-favicon": "~2.3.0",
+    "socket.io": "^1.7.2"
+  },
+  "devDependencies": {
+    "mocha": "^3.2.0",
+    "supertest": "^2.0.1"
+  }
+}
