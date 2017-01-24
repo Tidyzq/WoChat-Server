@@ -34,11 +34,17 @@ module.exports = {
       })
       // 如果有误，返回错误
       .catch(function (err) {
-        if (err.code == 11000)
-          return res.badRequest({
-            message: err.errmsg
-          });
-        res.serverError(err);
+        switch(err.name) {
+          case 'MongoError':
+            if (err.code == 11000) {
+              log.verbose('usersController.register :: duplicate key');
+              return res.badRequest({ message: err.errmsg });
+            }
+          case 'ValidationError':
+            log.verbose('usersController.register :: validation error');
+            return res.badRequest({ message: err.errors });
+        }
+        next(err);
       });
   },
 

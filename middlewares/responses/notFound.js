@@ -1,7 +1,8 @@
 module.exports = function (data) {
 
-  // Set status code
-  this.status(404);
+  data = data || '404 (Not Found)';
 
-  return this.json(data);
+  log.verbose('res.notFound() :: Sending 404 (Not Found) response');
+
+  this.status(404).json(data);
 };

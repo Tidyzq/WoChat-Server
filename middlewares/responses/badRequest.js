@@ -1,7 +1,8 @@
 module.exports = function (data) {
 
-  // Set status code
-  this.status(400);
+  data = data || '400 (Bad Request)';
 
-  return this.json(data);
+  log.verbose('res.badRequest() :: Sending 400 (Bad Request) response');
+
+  this.status(400).json(data);
 };

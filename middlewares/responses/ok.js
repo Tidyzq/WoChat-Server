@@ -1,7 +1,8 @@
 module.exports = function (data) {
 
-  // Set status code
-  this.status(200);
+  data = data || '200 (Ok)';
 
-  return this.json(data);
+  log.verbose('res.ok() :: Sending 200 (Ok) response');
+
+  this.status(200).json(data);
 };

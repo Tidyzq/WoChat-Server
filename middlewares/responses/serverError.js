@@ -1,7 +1,8 @@
 module.exports = function (data) {
 
-  // Set status code
-  this.status(500);
+  data = data || '500 (Server Error)';
 
-  return this.json(data);
+  log.verbose('res.serverError() :: Sending 500 (Server Error) response');
+
+  this.status(500).json(data);
 };
