@@ -2,13 +2,7 @@ var App = require('../app/index'),
     supertest = require('supertest');
 
 var testConfig = {
-  environment: 'test',
-  logger: {
-    level: 'error'
-  },
-  connection: {
-    mock: true,
-  },
+  env: 'test',
 };
 
 before(function () {

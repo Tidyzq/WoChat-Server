@@ -15,22 +15,45 @@ var App = (function(){
 
   };
 
-  prototype.loadConfigs = function (overrideConfig) {
+  prototype.loadConfigs = function (overrideConfigs) {
     var app = this.app;
+    // set working path
     app.set('path', process.cwd());
-    return new Promise(function (resolve, reject) {
-      includeAll.aggregate({
-        dirname: path.join(app.get('path'), 'configs'),
-        filter: /(.+)\.js$/,
-      }, function (err, modules) {
-        if (err) return reject(err);
-        modules = _.merge(modules, overrideConfig);
-        for (var moduleName in modules) {
-          app.set(moduleName, modules[moduleName]);
+
+    return Promise
+      .props({
+
+        customConfigs: new Promise(function (resolve, reject) {
+          includeAll.aggregate({
+            dirname: path.join(app.get('path'), 'configs'),
+            excludeDirs: /^env$/,
+            filter: /(.+)\.js$/,
+          }, function (err, configs) {
+            if (err) return reject(err);
+            resolve(configs);
+          });
+        }),
+
+        envConfigs: includeAll({
+          dirname: path.join(app.get('path'), 'configs', 'env'),
+          filter: /(.+)\.js$/,
+        }),
+
+        overrideConfigs: overrideConfigs || {},
+
+      })
+      .then(function (configs) {
+        var env = configs.overrideConfigs.env || configs.customConfigs.env || app.get('env');
+        configs.envConfigs = configs.envConfigs[env];
+
+        configs = _.merge(configs.customConfigs, configs.envConfigs, configs.overrideConfigs);
+
+        for (var moduleName in configs) {
+          app.set(moduleName, configs[moduleName]);
         }
-        resolve(modules);
+        return configs;
       });
-    });
+
   };
 
   prototype.loadControllers = function () {
