@@ -1,5 +1,3 @@
-'use strict';
-
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt');
 // var V = require('../utils/validator');

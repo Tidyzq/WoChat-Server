@@ -1,15 +1,30 @@
 module.exports.routes = {
 
+  /**
+   * param router
+   */
+  'id': {
+    param: 'IndexController.processId'
+  },
+
+  /**
+   * api router
+   */
+
   '/': {
-    get: 'indexController.index',
+    get: 'IndexController.index',
   },
 
-  '/register': {
-    post: 'usersController.register',
+  '/api/users/register': {
+    post: 'UserController.register',
   },
 
-  '/login': {
-    post: 'usersController.login',
+  '/api/users/login': {
+    post: 'UserController.login',
+  },
+
+  '/api/users/:id': {
+    get: ['AuthController.hasJwt', 'UserController.findOne'],
   },
 
 };

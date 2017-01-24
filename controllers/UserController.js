@@ -1,7 +1,22 @@
-var passport = require('passport');
+var passport = require('passport'),
+    ObjectId = require('mongoose').Types.ObjectId;
 
 module.exports = {
 
+  /**
+   * 检查是否是用户自身
+   */
+  isSelf: function (req, res, next) {
+    if (req.user && req.params.id && req.user._id == req.params.id) {
+      log.verbose(req.user._id, req.params.id);
+      next();
+    }
+    res.unauthorized();
+  },
+
+  /**
+   * 注册
+   */
   register: function (req, res, next) {
     // 由请求参数构造待创建User对象
     var User = app.models.User,
@@ -31,6 +46,9 @@ module.exports = {
       });
   },
 
+  /**
+   * 登陆
+   */
   login: function (req, res, next) {
     // 使用本地验证策略对登录进行验证
     passport.authenticate('local', function(err, user) {
@@ -49,6 +67,22 @@ module.exports = {
       });
 
     })(req, res);
-  }
+  },
+
+  /**
+   * 获取用户信息
+   */
+  findOne: function (req, res, next) {
+    var User = app.models.User,
+        id = req.params.id;
+    User.findOne({ _id: id })
+      .lean()
+      .then(function (user) {
+        res.ok(user);
+      })
+      .catch(function (err) {
+        next(err);
+      });
+  },
 
 };
