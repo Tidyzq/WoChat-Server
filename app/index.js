@@ -76,6 +76,16 @@ var App = (function(){
     return Promise.resolve(models);
   };
 
+  prototype.loadServices = function () {
+    var app = this.app;
+    var services = includeAll({
+      dirname: path.join(app.get('path'), 'services'),
+      filter: /(.+)\.js$/,
+    });
+    app.services = services;
+    return Promise.resolve(services);
+  };
+
   prototype.loadMiddlewares = function () {
     var app = this.app;
     var middlewares = includeAll({
@@ -205,6 +215,7 @@ var App = (function(){
       .then(function () { return app.loadComponents(); })
       .then(function () { return app.loadGlobals(); })
       .then(function () { return app.loadModels(); })
+      .then(function () { return app.loadServices(); })
       .then(function () { return app.loadControllers(); })
       .then(function () { return app.loadMiddlewares(); })
       .then(function () { return app.connectDatabase(); })

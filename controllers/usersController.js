@@ -1,21 +1,4 @@
-var jwt = require('jsonwebtoken'),
-    passport = require('passport'),
-    jwtConfig = app.get('passport').jwt;
-
-var createToken = function(user) {
-  return jwt.sign(
-    {
-      user: user
-    },
-    jwtConfig.secret,
-    {
-      algorithm: jwtConfig.algorithm,
-      expiresIn: jwtConfig.expiresIn,
-      issuer: jwtConfig.issuer,
-      audience: jwtConfig.audience
-    }
-  );
-};
+var passport = require('passport');
 
 module.exports = {
 
@@ -55,7 +38,7 @@ module.exports = {
         return res.badRequest(err);
 
       delete user.password;
-      var token = createToken(user);
+      var token = app.services.jwt.createToken(user);
 
       // 将 token 作为 cookie 返回
       // res.cookie('jwt', token);
