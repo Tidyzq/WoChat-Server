@@ -4,7 +4,7 @@ module.exports = {
 
   port: 1337,
 
-  views: path.join(app.get('path'), 'views'),
+  views: './views',
 
   'view engine': 'pug',
 

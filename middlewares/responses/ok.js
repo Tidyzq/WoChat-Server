@@ -1,7 +1,7 @@
 module.exports = function (data) {
 
   // Set status code
-  this.status(500);
+  this.status(200);
 
   return this.json(data);
 };

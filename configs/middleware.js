@@ -1,10 +1,9 @@
 var express = require('express');
 var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
+// var favicon = require('serve-favicon');
+// var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var response = require('../middlewares/response');
 
 module.exports.middleware = {
 
@@ -15,14 +14,15 @@ module.exports.middleware = {
     'bodyParserJson',
     'bodyParserUrl',
     'cookieParser',
-    'static'
+    'passport',
+    'powerdBy',
+    'static',
+    'router',
+    '404',
+    '500',
   ],
 
   // favicon: favicon(path.join(app.get('path'), 'public', 'favicon.ico')),
-
-  response: response,
-
-  logger: logger('dev'),
 
   bodyParserJson: bodyParser.json(),
 
@@ -30,6 +30,6 @@ module.exports.middleware = {
 
   cookieParser: cookieParser(),
 
-  static: express.static(path.join(app.get('path'), 'public')),
+  static: express.static('./public'),
 
 };

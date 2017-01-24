@@ -4,8 +4,12 @@ module.exports.routes = {
     get: 'indexController.index',
   },
 
-  '/user': {
-    get: ['indexController.test', 'usersController.index'],
+  '/register': {
+    post: 'usersController.register',
+  },
+
+  '/login': {
+    post: 'usersController.login',
   },
 
 };

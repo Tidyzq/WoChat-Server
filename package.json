@@ -9,6 +9,7 @@
     "bcrypt": "^1.0.2",
     "bluebird": "^3.4.7",
     "body-parser": "~1.15.2",
+    "captains-log": "^1.0.2",
     "cookie-parser": "~1.4.3",
     "debug": "~2.2.0",
     "express": "~4.14.0",

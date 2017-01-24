@@ -3,21 +3,17 @@ process.chdir(__dirname);
 var express = require('express');
 var path = require('path');
 var http = require('http');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
 
 var _ = require('lodash');
 var Promise = require('bluebird');
 var includeAll = require('include-all');
-
-var debug = require('debug')('wochat-server-new:server');
+var mongoose = require('mongoose');
 
 // var index = require('./routes/index');
 // var users = require('./routes/users');
 
-var app = global.app = express();
+var app = express();
+
 app.set('path', __dirname);
 
 var loadConfigs = function () {
@@ -44,65 +40,69 @@ var loadControllers = function () {
   return Promise.resolve(controllers);
 };
 
+var loadModels = function () {
+  var models = includeAll({
+    dirname: path.join(app.get('path'), 'models'),
+    filter: /(.+)\.js$/,
+  });
+  app.models = models;
+  return Promise.resolve(models);
+};
+
+var loadMiddlewares = function () {
+  var middlewares = includeAll({
+    dirname: path.join(app.get('path'), 'middlewares'),
+    filter: /(.+)\.js$/,
+  });
+  var middlewareConfig = app.get('middleware');
+  return Promise.each(middlewareConfig.order, function (moduleName) {
+    app.log.silly('Loading middleware:', moduleName);
+    app.use(middlewareConfig[moduleName] || middlewares[moduleName]);
+  });
+};
+
+var loadGlobals = function () {
+  var globalConfig = app.get('globals');
+  if (!_.isObject(globalConfig) || _.isEmpty(globalConfig)) return;
+  if (globalConfig.app)
+    global.app = app;
+  if (globalConfig.promise)
+    global.Promise = Promise;
+  if (globalConfig.log)
+    global.log = app.log;
+  if (globalConfig.lodash)
+    global._ = _;
+};
+
+var loadComponents = function () {
+  var components = {
+    logger: (function () {
+      var logger = require('captains-log')(app.get('logger'));
+      app.log = logger;
+      return Promise.resolve(logger);
+    })(),
+  };
+  return Promise.props(components);
+};
+
 // load all configs
 loadConfigs()
+  .then(loadComponents)
+  .then(loadGlobals)
+  .then(loadModels)
   .then(loadControllers)
-  // load middlewares
-  .then(function () {
-    var _config = app.get('middleware');
-    return Promise.each(_config.order, function (moduleName) {
-      // TODO: use better logger
-      console.log('Loading middleware:', moduleName);
-      app.use(_config[moduleName]);
-    });
-  })
-  // load routers
+  .then(loadMiddlewares)
   .then(function () {
 
-    var _config = app.get('routes'),
-        controllers = app.get('controllers'),
-        policies = app.get('policies');
+    var mongoose = require('mongoose'),
+        mongoConfig = app.get('connection');
+    // use bluebird as mongoose promise
+    mongoose.Promise = Promise;
+    // connect to mongo database
+    mongoose.connect('mongodb://' + mongoConfig.host
+                            + ':' + mongoConfig.port
+                            + '/' + mongoConfig.database);
 
-    for (var routePath in _config) {
-
-      if (!_.isObject(_config[routePath]))
-        _config[routePath] = { get: _config[routePath] };
-      for (var method in _config[routePath]) {
-        var handlers = _config[routePath][method];
-
-        if (!_.isArray(handlers))
-          handlers = [handlers];
-
-        console.log('Bind', method, routePath, handlers);
-
-        handlers = _.map(handlers, function (handlerPath) {
-          return _.get(controllers, handlerPath);
-        });
-
-        app[method].apply(app, _.concat(routePath, handlers));
-      }
-    }
-  })
-  .then(function () {
-    // catch 404 and forward to error handler
-    app.use(function(req, res, next) {
-      var err = new Error('Not Found');
-      err.status = 404;
-      next(err);
-    });
-
-    // error handler
-    app.use(function(err, req, res, next) {
-      // set locals, only providing error in development
-      res.locals.message = err.message;
-      res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-      // render the error page
-      res.status(err.status || 500);
-      res.render('error');
-    });
-  })
-  .then(function () {
     /**
      * Create HTTP server.
      */
@@ -112,6 +112,8 @@ loadConfigs()
     /**
      * Listen on provided port, on all network interfaces.
      */
+
+    var port = app.get('port') || 3000;
 
     server.listen(port);
     server.on('error', onError);
@@ -153,11 +155,11 @@ loadConfigs()
       // handle specific listen errors with friendly messages
       switch (error.code) {
         case 'EACCES':
-          console.error(bind + ' requires elevated privileges');
+          app.log.error(bind + ' requires elevated privileges');
           process.exit(1);
           break;
         case 'EADDRINUSE':
-          console.error(bind + ' is already in use');
+          app.log.error(bind + ' is already in use');
           process.exit(1);
           break;
         default:
@@ -174,7 +176,7 @@ loadConfigs()
       var bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr.port;
-      debug('Listening on ' + bind);
+      app.log.info('Listening on ' + bind);
     }
 
   });
