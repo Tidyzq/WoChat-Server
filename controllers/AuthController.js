@@ -10,8 +10,8 @@ module.exports = {
         next();
       })
       .catch(function (err) {
-        log.verbose('AuthController.hasJwt ::', err);
-        res.unauthorized(err);
+        log.verbose('AuthController.hasJwt ::', err.message);
+        res.unauthorized(err.message);
       });
 
   },

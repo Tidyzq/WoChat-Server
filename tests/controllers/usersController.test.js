@@ -1,9 +1,9 @@
 var assert = require('assert');
 
 describe('AuthController', function () {
-  describe('/register', function () {
+  describe('/api/users/register', function () {
     it('should able to register', function () {
-      return agent.post('/register')
+      return agent.post('/api/users/register')
         .send({
           username: 'testuser',
           nickname: 'testuser',
@@ -15,7 +15,7 @@ describe('AuthController', function () {
         });
     });
     it('should not register again', function () {
-      return agent.post('/register')
+      return agent.post('/api/users/register')
         .send({
           username: 'testuser',
           nickname: 'testuser',
@@ -24,7 +24,7 @@ describe('AuthController', function () {
         .expect(400);
     });
     it('must provide password', function () {
-      return agent.post('/register')
+      return agent.post('/api/users/register')
         .send({
           username: 'agentanotheruser',
           nickname: 'testuser',
@@ -32,9 +32,9 @@ describe('AuthController', function () {
         .expect(400);
     });
   });
-  describe('/login', function () {
+  describe('/api/users/login', function () {
     it('should able to login', function () {
-      return agent.post('/login')
+      return agent.post('/api/users/login')
         .send({
           username: 'testuser',
           password: '123456'
@@ -47,7 +47,7 @@ describe('AuthController', function () {
         });
     });
     it('should not able to login with wrong password', function () {
-      return agent.post('/login')
+      return agent.post('/api/users/login')
         .send({
           username: 'testuser',
           password: '123'
