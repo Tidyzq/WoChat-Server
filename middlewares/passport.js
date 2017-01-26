@@ -7,11 +7,11 @@ var passport = require('passport'),
 var passportConfig = app.get('passport');
 
 passport.serializeUser(function(user, done) {
-  done(null, user.id);
+  done(null, user._id);
 });
 
 passport.deserializeUser(function(id, done) {
-  app.models.User.findOne({ id: id } , function (err, user) {
+  app.models.User.findOne({ _id: id } , function (err, user) {
     done(err, user);
   });
 });
@@ -26,8 +26,8 @@ passport.use(new localStrategy(
 
 
     app.models.User.findOne({ username: username })
-      .lean()
       .select('+password')
+      .lean()
       // 检查用户是否存在
       .then(function (user) {
         if (!user)
@@ -60,7 +60,7 @@ passport.use(new jwtStrategy(
     jwtFromRequest: passportConfig.jwt.extractor,
   }, function (payload, done) {
     var user = payload.user;
-    app.models.User.findOne({ id: user.id })
+    app.models.User.findOne({ _id: user._id })
       .then(function (user) {
         if (!user)
           throw new Error('No Such User.');

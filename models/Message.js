@@ -18,7 +18,8 @@ var messageSchema = new Schema({
     },
     to_group: {
       type: Boolean,
-      required: true
+      required: true,
+      default: false,
     },
     time: {
       type: Date,
@@ -29,6 +30,7 @@ var messageSchema = new Schema({
     type: {
       type: Number,
       required: true,
+      default: 0,
       // validate: V.messageType
     },
     content: {

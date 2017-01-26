@@ -27,7 +27,7 @@ module.exports.passport = {
       // 从 URL 的 query 参数提取
       extractJwt.fromUrlQueryParameter('access_token'),
       // 从 cookie 提取
-      // cookieExtractor('jwt'),
+      cookieExtractor('jwt'),
     ]),
 
   },

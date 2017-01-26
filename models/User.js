@@ -118,16 +118,25 @@ var userSchema = new Schema({
   versionKey: false
 });
 
-// 创建（注册）用户前，对用户密码加密
-userSchema.pre('save', function(next) {
+// 创建（注册）和修改用户前，对用户密码加密
+var encryptPassword = function (next) {
   var value = this;
-  bcrypt.genSalt(10, function(err, salt) {
-    bcrypt.hash(value.password, salt, function(err, hash) {
-      if(err) return next(err);
-      value.password = hash;
-      next();
+  if (value.password) {
+    log.verbose('UserModel :: encrypting password');
+    bcrypt.genSalt(10, function(err, salt) {
+      bcrypt.hash(value.password, salt, function(err, hash) {
+        if(err) return next(err);
+        value.password = hash;
+        log.verbose('UserModel :: encrypting succeed');
+        next();
+      });
     });
-  });
-});
+  } else {
+    next();
+  }
+};
+userSchema.pre('save', encryptPassword);
+// userSchema.pre('update', encryptPassword);
+// userSchema.pre('findOneAndUpdate', encryptPassword);
 
 module.exports = mongoose.model('User', userSchema);

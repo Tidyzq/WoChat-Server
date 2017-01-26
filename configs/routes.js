@@ -6,9 +6,6 @@ module.exports.routes = {
 
   '/api': {
     '/users': {
-      'id': {
-        param: 'IndexController.processId',
-      },
       '/register': {
         post: 'UserController.register',
       },
@@ -17,7 +14,18 @@ module.exports.routes = {
       },
       '/:id': {
         get: ['AuthController.hasJwt', 'UserController.findOne'],
+        put: ['AuthController.hasJwt', 'UserController.isSelf', 'UserController.update'],
       },
+      '/:id/contacts': {
+        get: ['AuthController.hasJwt', 'UserController.isSelf', 'UserController.getContacts'],
+      },
+      '/:id/messages': {
+        get: ['AuthController.hasJwt', 'UserController.isSelf', 'MessageController.receive'],
+      }
+    },
+    '/messages': {
+      get: ['AuthController.hasJwt', 'MessageController.receive'],
+      post: ['AuthController.hasJwt', 'MessageController.send'],
     },
   },
 
