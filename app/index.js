@@ -170,6 +170,7 @@ var App = (function(){
     var server = http.createServer(app);
 
     var port = app.get('port') || 3000;
+    var hostname = app.get('hostname') || '127.0.0.1';
 
     var onError = function (error) {
       if (error.syscall !== 'listen') {
@@ -198,12 +199,12 @@ var App = (function(){
     var onListening = function () {
       var addr = server.address();
       var bind = typeof addr === 'string'
-        ? 'pipe ' + addr
-        : 'port ' + addr.port;
+        ? addr
+        : addr.address + ':' + addr.port;
       app.log.info('Listening on ' + bind);
     };
 
-    server.listen(port);
+    server.listen(port, hostname);
 
     server.on('error', onError);
     server.on('listening', onListening);

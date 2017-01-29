@@ -1,4 +1,4 @@
 module.exports = function (req, res, next) {
-  res.set('X-Powresered-By', 'Tidyzq');
+  res.set('X-Powered-By', 'Tidyzq');
   next();
 };

@@ -5,7 +5,7 @@ var _config = app.get('routes'),
     Router = express.Router;
 
 var buildRouter = function (prefix, path, config) {
-  var router = Router();
+  var router = Router({mergeParams: true});
 
   for (var key in config) {
     var val = config[key];
@@ -16,13 +16,19 @@ var buildRouter = function (prefix, path, config) {
 
     if (_.isArray(val)) {
 
-      app.log.silly('Router Bind:', key, prefix + path, val);
+      var method = key;
+
+      app.log.silly('Router Middleware :: Bind', method, prefix + path);
 
       var handlers = _.map(val, function (handlerPath) {
-        return _.get(controllers, handlerPath);
+        var handler = _.get(controllers, handlerPath);
+        if (!handler) log.error('Router Middleware ::', handlerPath, 'not found');
+        return handler;
       });
 
-      router[key].apply(router, _.concat(path, handlers));
+      handlers = _.filter(handlers, _.isFunction);
+
+      router[method].apply(router, _.concat(path, handlers));
 
     } else if (_.isObject(val)) {
 

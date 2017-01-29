@@ -7,9 +7,9 @@ module.exports = {
     var Message = app.models.Message,
         utils = app.services.utils;
         id = req.params.id || req.user._id,
-        sort = req.query.sort ? _.split(req.query.sort, ',') : [],
-        skip = req.query.skip || 0,
-        limit = req.query.limit || 30;
+        sort = req.query.sort,
+        skip = req.query.skip,
+        limit = req.query.limit;
 
     Message.find({ sender: id })
       .lean()

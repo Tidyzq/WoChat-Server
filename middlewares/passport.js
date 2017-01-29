@@ -59,8 +59,8 @@ passport.use(new jwtStrategy(
     secretOrKey: passportConfig.jwt.secret,
     jwtFromRequest: passportConfig.jwt.extractor,
   }, function (payload, done) {
-    var user = payload.user;
-    app.models.User.findOne({ _id: user._id })
+    var id = payload.user;
+    app.models.User.findOne({ _id: id })
       .then(function (user) {
         if (!user)
           throw new Error('No Such User.');

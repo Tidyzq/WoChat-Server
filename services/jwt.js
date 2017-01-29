@@ -14,17 +14,17 @@ module.exports = {
     });
   },
 
-  createToken: function(user) {
+  createToken: function(id) {
     return jwt.sign(
       {
-        user: user
+        user: id
       },
       jwtConfig.secret,
       {
         algorithm: jwtConfig.algorithm,
         expiresIn: jwtConfig.expiresIn,
-        issuer: jwtConfig.issuer,
-        audience: jwtConfig.audience
+        // issuer: jwtConfig.issuer,
+        // audience: jwtConfig.audience
       }
     )
   },

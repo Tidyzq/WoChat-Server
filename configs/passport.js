@@ -17,8 +17,8 @@ module.exports.passport = {
     expiresIn: '7d', // 7 days
     secret: '22588c157798ef5a0462d33a670cab23', // random key
     algorithm : 'HS256',
-    issuer : 'tidyzq.com',
-    audience : 'tidyzq.com',
+    // issuer : 'tidyzq.com',
+    // audience : 'tidyzq.com',
 
     // jwt 验证要使用的提取器，验证过程会逐一尝试提取
     extractor: extractJwt.fromExtractors([

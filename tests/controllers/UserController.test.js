@@ -1,6 +1,6 @@
 var assert = require('assert');
 
-describe('AuthController', function () {
+describe('UserController', function () {
   describe('/api/users/register', function () {
     it('should able to register', function () {
       return agent.post('/api/users/register')

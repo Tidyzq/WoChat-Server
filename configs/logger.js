@@ -1,3 +1,10 @@
 module.exports.logger = {
-  level: 'silly',
+
+  level: 'info',
+
+  inspectOptions: {
+    colors: true,
+    depth: null
+  },
+
 };
