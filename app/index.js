@@ -10,9 +10,7 @@ var mongoose = require('mongoose');
 var App = (function(){
   var prototype = App.prototype, constructor = App;
   function App() {
-
     this.app = express();
-
   };
 
   prototype.loadConfigs = function (overrideConfigs) {
@@ -92,11 +90,8 @@ var App = (function(){
       dirname: path.join(app.get('path'), 'middlewares'),
       filter: /(.+)\.js$/,
     });
-    var middlewareConfig = app.get('middleware');
-    return Promise.each(middlewareConfig.order, function (moduleName) {
-      app.log.silly('Loading middleware:', moduleName);
-      app.use(middlewareConfig[moduleName] || middlewares[moduleName]);
-    });
+    app.middlewares = middlewares;
+    return Promise.resolve(middlewares);
   };
 
   prototype.loadGlobals = function () {
@@ -163,11 +158,31 @@ var App = (function(){
       });
   };
 
-  prototype.startHttp = function () {
+  prototype.loadHttp = function () {
+    var app = this.app,
+        middlewareOrder = app.get('http').middlewares || [],
+        middlewares = app.middlewares || {},
+        installed = [];
 
+    middlewareOrder.forEach(function (middlewareName) {
+      if (_.has(middlewares, middlewareName)) {
+        app.log.silly('App.loadHttp :: middleware', middlewareName, 'installed');
+        var middleware = middlewares[middlewareName];
+        app.use(middleware);
+        installed.push(middlewareName);
+      } else {
+        app.log.warn('App.loadHttp :: middleware', middlewareName, 'not found');
+      }
+    });
+    return Promise.resolve(installed);
+  };
+
+  prototype.startServer = function () {
     var app = this.app;
 
     var server = http.createServer(app);
+
+    app.socket.attach(server);
 
     var port = app.get('port') || 3000;
     var hostname = app.get('hostname') || '127.0.0.1';
@@ -210,6 +225,80 @@ var App = (function(){
     server.on('listening', onListening);
   };
 
+  prototype.loadSocket = function () {
+    var app = this.app,
+        socketConfig = app.get('socket');
+
+    var socket = require('socket.io')({ path: socketConfig.path });
+
+    app.socket = socket;
+
+    var numUsers = 0;
+
+    socket.on('connection', function (client) {
+      app.log.silly('socket connect');
+      var addedUser = false;
+
+      // when the client emits 'new message', this listens and executes
+      client.on('new message', function (data) {
+        // we tell the client to execute 'new message'
+        client.broadcast.emit('new message', {
+          username: client.username,
+          message: data
+        });
+      });
+
+      // when the client emits 'add user', this listens and executes
+      client.on('add user', function (username) {
+        app.log.silly('socket add user');
+        if (addedUser) return;
+
+        // we store the username in the client session for this client
+        client.username = username;
+        ++numUsers;
+        addedUser = true;
+        client.emit('login', {
+          numUsers: numUsers
+        });
+        // echo globally (all clients) that a person has connected
+        client.broadcast.emit('user joined', {
+          username: client.username,
+          numUsers: numUsers
+        });
+      });
+
+      // when the client emits 'typing', we broadcast it to others
+      client.on('typing', function () {
+        client.broadcast.emit('typing', {
+          username: client.username
+        });
+      });
+
+      // when the client emits 'stop typing', we broadcast it to others
+      client.on('stop typing', function () {
+        client.broadcast.emit('stop typing', {
+          username: client.username
+        });
+      });
+
+      // when the user disconnects.. perform this
+      client.on('disconnect', function () {
+        if (addedUser) {
+          --numUsers;
+
+          // echo globally that this client has left
+          client.broadcast.emit('user left', {
+            username: client.username,
+            numUsers: numUsers
+          });
+        }
+      });
+    });
+
+    return Promise.resolve(socket);
+
+  };
+
   prototype.start = function (overrideConfig) {
     var app = this;
     return app.loadConfigs(overrideConfig)
@@ -220,7 +309,9 @@ var App = (function(){
       .then(function () { return app.loadControllers(); })
       .then(function () { return app.loadMiddlewares(); })
       .then(function () { return app.connectDatabase(); })
-      .then(function () { return app.startHttp(); });
+      .then(function () { return app.loadHttp(); })
+      .then(function () { return app.loadSocket(); })
+      .then(function () { return app.startServer(); });
   };
 
   return App;

@@ -1,5 +1,3 @@
-var path = require('path');
-
 module.exports = {
 
   hostname: 'localhost',
@@ -9,5 +7,7 @@ module.exports = {
   views: './views',
 
   'view engine': 'pug',
+
+  'x-powered-by': false,
 
 };
