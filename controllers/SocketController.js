@@ -1,27 +1,41 @@
-var jsonwebtoken = require('jsonwebtoken');
-
 var SocketController = module.exports = {
 
-  auth: function (client, token) {
-    log.silly('SocketController::auth', token);
-    token = token || '';
-    jsonwebtoken.verify(token, app.get('passport').jwt.secret, function (err, decoded) {
-      if (err) return client.emit('auth:fail', err);
-      client.user = decoded.user;
-      client.join(client.user);
-      client.emit('auth:success', decoded.user);
-      SocketController.receive(client);
-    });
+  isAuthed: function (socket, args, next) {
+    var client = socket.sock,
+        event = args[0];
+
+    if (!client.user) {
+      log.verbose('SocketController::isAuthed not authed');
+      return client.emit('unauth', 'need auth');
+    }
+    next();
   },
 
-  message: function (client, value) {
-    if (!client.user) return client.emit('need auth');
-    value = value || {};
+  auth: function (socket, args) {
+    var tokenService = app.services.token,
+        token = args[1] || '';
+        client = socket.sock;
 
-    value.sender = client.user;
-    var Message = app.models.Message;
+    tokenService.verifyAccessToken(token)
+      .then(function (decoded) {
+        client.user = decoded.user;
+        client.join(client.user);
+        client.emit('auth:success', decoded.user);
+      })
+      .catch(function (err) {
+        log.verbose('SocketController::auth fail', err.message);
+        client.emit('auth:fail', err.message);
+      });
+  },
 
-    Message.create(value)
+  message: function (socket, args) {
+    var Message = app.remove.Message,
+        msg = args[1] || {},
+        client = socket.sock;
+
+    msg.sender = client.user;
+
+    Message.create(msg)
       .then(function (message) {
         client.emit('message:success', message.toObject());
         client.to(message.receiver.toString()).emit('message', [message]);
@@ -31,24 +45,21 @@ var SocketController = module.exports = {
       });
   },
 
-  receive: function (client) {
-    if (!client.user) return client.emit('need auth');
-
-    var Message = app.models.Message;
+  receive: function (socket) {
+    var Message = app.remove.Message,
+        client = socket.sock;
 
     Message.find({ receiver: client.user })
       .lean()
       .then(function (messages) {
-        if (messages.length)
-          client.emit('message', messages);
+        client.emit('message', messages);
       });
   },
 
-  ack: function (client, acks) {
-    if (!client.user) return client.emit('need auth');
-    acks = acks || [];
-
-    var Message = app.models.Message;
+  ack: function (socket, args) {
+    var Message = app.remove.Message,
+        acks = args[1] || {},
+        client = socket.sock;
 
     Message.remove({
       receiver: client.user,

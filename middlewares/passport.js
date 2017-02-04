@@ -1,10 +1,10 @@
 var passport = require('passport'),
     localStrategy = require('passport-local').Strategy,
-    jwtStrategy = require('passport-jwt').Strategy,
-    extractJwt = require('passport-jwt').ExtractJwt,
+    // jwtStrategy = require('passport-jwt').Strategy,
+    // extractJwt = require('passport-jwt').ExtractJwt,
     bcrypt = require('bcrypt');
 
-var passportConfig = app.get('passport');
+// var passportConfig = app.get('passport');
 
 passport.serializeUser(function(user, done) {
   done(null, user._id);
@@ -22,8 +22,6 @@ passport.use(new localStrategy(
     passwordField: 'password'
   },
   function(username, password, done) {
-
-
 
     app.models.User.findOne({ username: username })
       .select('+password')
@@ -45,6 +43,7 @@ passport.use(new localStrategy(
       })
       // 验证完成，返回用户信息
       .then(function (user) {
+        delete user.password;
         done(null, user);
       })
       // 验证失败，返回错误信息
@@ -54,24 +53,24 @@ passport.use(new localStrategy(
   }
 ));
 
-passport.use(new jwtStrategy(
-  {
-    secretOrKey: passportConfig.jwt.secret,
-    jwtFromRequest: passportConfig.jwt.extractor,
-  }, function (payload, done) {
-    var id = payload.user;
-    app.models.User.findOne({ _id: id })
-      .then(function (user) {
-        if (!user)
-          throw new Error('No Such User.');
-        return user;
-      })
-      .then(function (user) {
-        done(null, user, {});
-      })
-      .catch(done);
-    // done(null, user, {});
-  }
-));
+// passport.use(new jwtStrategy(
+//   {
+//     secretOrKey: passportConfig.jwt.secret,
+//     jwtFromRequest: passportConfig.jwt.extractor,
+//   }, function (payload, done) {
+//     var id = payload.user;
+//     app.models.User.findOne({ _id: id })
+//       .then(function (user) {
+//         if (!user)
+//           throw new Error('No Such User.');
+//         return user;
+//       })
+//       .then(function (user) {
+//         done(null, user, {});
+//       })
+//       .catch(done);
+//     // done(null, user, {});
+//   }
+// ));
 
 module.exports = passport.initialize();

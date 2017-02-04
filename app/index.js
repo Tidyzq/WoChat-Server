@@ -60,7 +60,7 @@ var App = (function(){
       dirname: path.join(app.get('path'), 'controllers'),
       filter: /(.+)\.js$/,
     });
-    app.set('controllers', controllers);
+    app.controllers = controllers;
     return Promise.resolve(controllers);
   };
 
@@ -227,24 +227,27 @@ var App = (function(){
 
   prototype.loadSocket = function () {
     var app = this.app,
-        socketConfig = app.get('socket');
+        socketConfig = app.get('socket'),
+        middlewareOrder = app.get('socket').middlewares || [],
+        middlewares = app.middlewares || {},
+        installed = [];
 
     var socket = require('socket.io')({ path: socketConfig.path });
 
     app.socket = socket;
 
-    socket.on('connection', function (client) {
-
-      for (var handlerName in socketConfig.handlers) {
-        var handlerPath = socketConfig.handlers[handlerName];
-        var handler = _.get(app.get('controllers'), handlerPath);
-
-        client.on(handlerName, handler.bind(client, client));
+    middlewareOrder.forEach(function (middlewareName) {
+      if (_.has(middlewares, middlewareName)) {
+        app.log.silly('App.loadSocket :: middleware', middlewareName, 'installed');
+        var middleware = middlewares[middlewareName];
+        socket.use(middleware);
+        installed.push(middlewareName);
+      } else {
+        app.log.warn('App.loadSocket :: middleware', middlewareName, 'not found');
       }
-
     });
 
-    return Promise.resolve(socket);
+    return Promise.resolve(installed);
 
   };
 

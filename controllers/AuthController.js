@@ -56,16 +56,18 @@ module.exports = {
    * 登陆
    */
   login: function (req, res, next) {
+    var tokenService = app.services.token;
+
     passport.authenticate('local', function(err, user) {
       // 使用本地验证策略对登录进行验证
       if (err) return res.badRequest(err.message);
       if (!user) return res.badRequest('No Such User');
 
-      var accessToken = app.services.jwt.createAccessToken(user);
-      var refreshToken = app.services.jwt.createRefreshToken(user);
+      var accessToken = tokenService.createAccessToken(user);
+      var refreshToken = tokenService.createRefreshToken(user);
 
       // 将 token 作为 cookie 返回
-      // res.cookie('jwt', token);
+      // res.cookie('token', token);
       // 将 token 作为 http body 返回
       return res.ok({
         user: user,
@@ -79,13 +81,13 @@ module.exports = {
    * 刷新 token
    */
   refresh: function (req, res, next) {
-    var jwt = app.services.jwt,
+    var tokenService = app.services.token,
         refreshToken = req.body.refreshToken;
 
     if (!refreshToken)
       return res.badRequest('No Refresh Token');
 
-    jwt.refreshToken(refreshToken)
+    tokenService.refreshToken(refreshToken)
       .then(function (tokens) {
         res.ok(tokens);
       })

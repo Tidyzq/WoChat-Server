@@ -4,7 +4,7 @@ var App = require('../app/index'),
 var testConfig = {
   env: 'test',
   logger: {
-    // level: 'verbose',
+    level: 'verbose',
   },
 };
 

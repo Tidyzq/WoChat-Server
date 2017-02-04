@@ -84,9 +84,7 @@ describe('AuthController', function () {
           refreshToken = res.body.refreshToken;
         })
         .then(function () {
-          setTimeout(function () {
-            console.log('done');
-          }, 1000);
+          setTimeout(done, 1000);
         });
     });
     it('should able to refresh', function () {

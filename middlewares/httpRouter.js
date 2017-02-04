@@ -1,11 +1,11 @@
 var express = require('express');
 
-var _config = app.get('routes'),
-    controllers = app.get('controllers'),
+var _config = app.get('http').routes,
+    controllers = app.controllers,
     Router = express.Router;
 
 var buildRouter = function (prefix, path, config) {
-  var router = Router({mergeParams: true});
+  var router = Router({ mergeParams: true });
 
   for (var key in config) {
     var val = config[key];
@@ -18,11 +18,11 @@ var buildRouter = function (prefix, path, config) {
 
       var method = key;
 
-      app.log.silly('Router Middleware :: Bind', method, prefix + path);
+      app.log.silly('Http Router Middleware :: Bind', method, prefix + path);
 
       var handlers = _.map(val, function (handlerPath) {
         var handler = _.get(controllers, handlerPath);
-        if (!handler) log.error('Router Middleware ::', handlerPath, 'not found');
+        if (!handler) log.error('Http Router Middleware ::', handlerPath, 'not found');
         return handler;
       });
 

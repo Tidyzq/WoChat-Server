@@ -2,11 +2,20 @@ module.exports.socket = {
 
   path: '/socket.io',
 
-  handlers: {
+  middlewares: [
+    'socketRouter',
+  ],
+
+  routes: {
+
     auth: 'SocketController.auth',
-    message: 'SocketController.message',
-    receive: 'SocketController.receive',
-    ack: 'SocketController.ack',
+
+    message: ['SocketController.isAuthed', 'SocketController.message'],
+
+    receive: ['SocketController.isAuthed', 'SocketController.receive'],
+
+    ack: ['SocketController.isAuthed', 'SocketController.ack'],
+
   },
 
 };
