@@ -1,5 +1,6 @@
 var App = require('../app/index'),
-    supertest = require('supertest');
+    supertest = require('supertest'),
+    Promise = require('bluebird');
 
 var testConfig = {
   env: 'test',
@@ -20,6 +21,7 @@ before(function () {
     .then(function () {
       var app = server.app;
       global.agent = supertest(app);
+      global.Promise = Promise;
     });
 });
 
