@@ -7,6 +7,9 @@ var Promise = require('bluebird');
 var includeAll = require('include-all');
 var mongoose = require('mongoose');
 
+// use bluebird as mongoose promise
+mongoose.Promise = Promise;
+
 var App = (function(){
   var prototype = App.prototype, constructor = App;
   function App() {
@@ -122,15 +125,12 @@ var App = (function(){
 
   prototype.connectDatabase = function () {
     var app = this.app;
-    var mongoose = require('mongoose'),
-        mongoConfig = app.get('connection');
+    var mongoConfig = app.get('connection');
 
     var mongoPath = 'mongodb://' + mongoConfig.host +
         ':' + mongoConfig.port +
         '/' + mongoConfig.database;
 
-    // use bluebird as mongoose promise
-    mongoose.Promise = Promise;
     // connect to mongo database
     var tryMock = function () {
       if (mongoConfig.mock) {

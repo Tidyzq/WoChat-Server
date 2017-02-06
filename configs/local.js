@@ -6,6 +6,8 @@ module.exports = {
 
   views: './views',
 
+  static: './public',
+
   'view engine': 'pug',
 
   'x-powered-by': false,

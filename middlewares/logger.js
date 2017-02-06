@@ -7,7 +7,7 @@ module.exports = function (req, res, next) {
 
       req.endTime = new Date();
       var duration = req.endTime.getTime() - req.startTime.getTime();
-      log.verbose(res.statusCode, req.originalUrl, '-', duration, 'ms');
+      log.verbose(res.statusCode, req.method, req.originalUrl, '-', duration, 'ms');
   }
 
   if (!res.finished) {

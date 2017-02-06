@@ -10,7 +10,7 @@ describe('AuthController', function () {
           password: '123456'
         })
         .expect(200)
-        .then(function (res) {
+        .expect(function (res) {
           assert.equal(res.body.username, 'testuser');
           assert.equal(res.body.nickname, 'testuser');
           assert.ifError(res.body.password);

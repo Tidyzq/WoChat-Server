@@ -7,7 +7,7 @@ module.exports = {
    * 检查是否是用户自身
    */
   isSelf: function (req, res, next) {
-    if (req.user && req.params.id && req.user._id == req.params.id) {
+    if (req.user && req.params.id && req.user == req.params.id) {
       return next();
     }
     log.verbose('UserController.isSelf :: unauthorized');
@@ -15,64 +15,9 @@ module.exports = {
   },
 
   /**
-   * 注册
-   */
-  register: function (req, res, next) {
-    // 由请求参数构造待创建User对象
-    var User = app.models.User,
-        value = req.body;
-    User.create(value)
-      // 创建成功，返回创建用户
-      .then(function (created) {
-        return User.findOne({ _id: created._id })
-          .lean()
-          .then(function (user) {
-            res.ok(user);
-          });
-      })
-      // 如果有误，返回错误
-      .catch(function (err) {
-        switch(err.name) {
-          case 'MongoError':
-            if (err.code == 11000) {
-              log.verbose('UserController.register :: duplicate key');
-              return res.badRequest({ message: err.errmsg });
-            }
-          case 'ValidationError':
-            log.verbose('UserController.register :: validation error');
-            return res.badRequest({ message: err.errors });
-        }
-        next(err);
-      });
-  },
-
-  /**
-   * 登陆
-   */
-  login: function (req, res, next) {
-    // 使用本地验证策略对登录进行验证
-    passport.authenticate('local', function(err, user) {
-      if (err || !user)
-        return res.badRequest(err);
-
-      delete user.password;
-      var token = app.services.jwt.createToken(user._id);
-
-      // 将 token 作为 cookie 返回
-      res.cookie('jwt', token);
-      // 将 token 作为 http body 返回
-      return res.ok({
-        user: user,
-        token: token
-      });
-
-    })(req, res);
-  },
-
-  /**
    * 获取用户信息
    */
-  findOne: function (req, res, next) {
+  findUser: function (req, res, next) {
     var User = app.models.User,
         id = req.params.id;
         select = '';
@@ -83,7 +28,8 @@ module.exports = {
       select += ' +chat_groups';
 
     // 如果设置了 contacts 或 chat_groups 则需要为用户本人
-    if (!_.isEmpty(select) && (!req.user || req.user._id != req.params.id)) {
+    if (!_.isEmpty(select) && (!req.user || req.user != req.params.id)) {
+      log.verbose('UserController::findUser not user self');
       return res.unauthorized();
     }
 
@@ -98,15 +44,8 @@ module.exports = {
         res.ok(user);
       })
       .catch(function (err) {
-        switch (err.name) {
-          case 'Error':
-            if (err.message == 'User Not Found')
-              return res.notFound();
-            break;
-          case 'CastError':
-            return res.notFound();
-        }
-        next(err);
+        log.verbose('UserController::findUser', err.message);
+        res.notFound(err.message);
       });
   },
 
@@ -135,24 +74,9 @@ module.exports = {
         res.ok(user);
       })
       .catch(function (err) {
-        switch (err.name) {
-          case 'Error':
-            if (err.message == 'User Not Found')
-              log.verbose('UserController.update :: user not found');
-              return res.notFound();
-            break;
-          case 'CastError':
-            log.verbose('UserController.update :: cast error');
-            return res.badRequest();
-          case 'MongoError':
-            if (err.code == 11000) {
-              log.verbose('UserController.update :: duplicate key');
-              return res.badRequest({ message: err.errmsg });
-            }
-            break;
-        }
-        next(err);
-      })
+        log.verbose('UserController.update ::', err.message);
+        res.badRequest(req.message);
+      });
   },
 
   /**
@@ -160,30 +84,14 @@ module.exports = {
    */
   uploadAvatar: function (req, res, next) {
     var User = app.models.User,
+        imageService = app.services.image,
         id = req.params.id,
-        savePath = path.join(app.get('path'), 'public/images');
+        savePath = path.join(app.get('path'), app.get('image').path),
+        staticPath = path.join(app.get('path'), app.get('static'));
 
-    var saveAvatar = function () {
-      return new Promise(function (resolve, reject) {
-      req.file('avatar')
-        .upload(
-          {
-            dirname: savePath
-          }
-          , function (err, files) {
-          if (err) return reject(err);
-          if (files.length == 0) reject(new Error('No Avatar Provided'));
-          resolve(files[0]);
-        });
-      });
-    };
-
-    saveAvatar()
-      .then(function (file) {
-        var url = 'http://' + app.get('hostname') + ':' + app.get('port') + '/images/'+
-                  path.relative(savePath, file.fd);
-        return url;
-      })
+    Promise.resolve(req)
+      .then(imageService.saveImage('avatar', savePath))
+      .then(imageService.generateUrl(staticPath))
       .then(function (url) {
         return User.findOne({ _id: id })
           .then(function (user) {
@@ -197,17 +105,8 @@ module.exports = {
         res.ok(user);
       })
       .catch(function (err) {
-        switch (err.name) {
-          case 'Error':
-            switch (err.message) {
-              case 'User Not Found':
-                return res.notFound();
-              case 'No Avatar Provided':
-                return res.badRequest();
-            }
-            break;
-        }
-        next(err);
+        log.verbose('UserController::uploadAvatar', err.message);
+        err.badRequest(err.message);
       });
   },
 
@@ -241,15 +140,8 @@ module.exports = {
         res.ok(contacts);
       })
       .catch(function (err) {
-        switch (err.name) {
-          case 'Error':
-            if (err.message == 'User Not Found')
-              return res.notFound();
-            break;
-          case 'CastError':
-            return res.notFound();
-        }
-        next(err);
+        log.verbose('UserController::getContacts', err.message);
+        res.notFound(err.message);
       });
   },
 
@@ -285,21 +177,8 @@ module.exports = {
         res.created(contact);
       })
       .catch(function (err) {
-        switch (err.name) {
-          case 'Error':
-            switch (err.message) {
-              case 'User Not Found':
-                log.verbose('UserController.addContact :: user not found');
-                return res.notFound(err.message);
-              case 'Contact Already Exists':
-                log.verbose('UserController.addContact :: contact already exists');
-                return res.badRequest(err.message);
-            }
-            break;
-          case 'CastError':
-            return res.notFound(err.message);
-        }
-        next(err);
+        log.verbose('UserController.addContact ::', err.message);
+        res.badRequest(err.message);
       });
   },
 
@@ -323,18 +202,8 @@ module.exports = {
         });
       })
       .catch(function (err) {
-        switch (err.name) {
-          case 'Error':
-            switch (err.message) {
-              case 'User Not Found':
-                log.verbose('UserController.addContact :: user not found');
-                return res.notFound(err.message);
-            }
-            break;
-          case 'CastError':
-            return res.notFound(err.message);
-        }
-        next(err);
+        log.verbose('UserController.addContact ::', err.message);
+        res.notFound(err.message);
       });
   },
 
@@ -370,21 +239,8 @@ module.exports = {
         res.ok(contact);
       })
       .catch(function (err) {
-        switch (err.name) {
-          case 'Error':
-            switch (err.message) {
-              case 'User Not Found':
-                log.verbose('UserController.addContact :: user not found');
-                return res.notFound(err.message);
-              case 'Contact Not Found':
-                log.verbose('UserController.addContact :: contact not found');
-                return res.notFound(err.message);
-            }
-            break;
-          case 'CastError':
-            return res.notFound(err.message);
-        }
-        next(err);
+        log.verbose('UserController.addContact ::', err.message);
+        res.badRequest(err.message);
       });
   },
 
@@ -413,18 +269,8 @@ module.exports = {
         res.ok();
       })
       .catch(function (err) {
-        switch (err.name) {
-          case 'Error':
-            switch (err.message) {
-              case 'User Not Found':
-                log.verbose('UserController.addContact :: user not found');
-                return res.notFound(err.message);
-            }
-            break;
-          case 'CastError':
-            return res.notFound(err.message);
-        }
-        next(err);
+        log.verbose('UserController.deleteContact ::', err.message);
+        res.notFound(err.message);
       });
   },
 
@@ -461,21 +307,8 @@ module.exports = {
         res.ok(contact);
       })
       .catch(function (err) {
-        switch (err.name) {
-          case 'Error':
-            switch (err.message) {
-              case 'User Not Found':
-                log.verbose('UserController.getContact :: user not found');
-                return res.notFound(err.message);
-              case 'Contact Not Found':
-                log.verbose('UserController.getContact :: contact not found');
-                return res.notFound(err.message);
-            }
-            break;
-          case 'CastError':
-            return res.notFound(err.message);
-        }
-        next(err);
+        log.verbose('UserController.getContact ::', err.message);
+        res.notFound(err.message);
       });
   },
 

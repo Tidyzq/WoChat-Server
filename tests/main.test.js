@@ -6,6 +6,10 @@ var testConfig = {
   logger: {
     level: 'verbose',
   },
+  static: '.tmp',
+  image: {
+    path: '.tmp/images',
+  },
 };
 
 before(function () {
