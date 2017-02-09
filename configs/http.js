@@ -1,8 +1,15 @@
 module.exports.http = {
 
+  accessControl: {
+    allowOrigin: '*',
+    allowHeaders: 'Content-Type,Content-Length,Authorization,Accept,X-Requested-With',
+    allowMethods: 'PUT,POST,GET,DELETE,OPTIONS',
+  },
+
   middlewares: [
     'logger',
     'response',
+    'accessControl',
     'cookieParser',
     'bodyParser',
     'passport',
