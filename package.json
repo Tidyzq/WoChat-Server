@@ -1,6 +1,7 @@
 {
   "name": "wochat-server",
   "version": "2.0.0",
+  "author": "Tidyzq <tidyzq@tidyzq.com>",
   "private": true,
   "scripts": {
     "start": "node app.js",

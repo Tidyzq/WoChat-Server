@@ -20,8 +20,11 @@ module.exports = {
 
   slice: function (skip, limit) {
     skip = skip ? _.toInteger(skip) : 0;
-    limit = limit ? _.toInteger(limit) : 30;
-    var end = skip + limit;
+    limit = limit ? _.toInteger(limit) : undefined;
+    var end = undefined;
+    if (limit) {
+      end = skip + limit;
+    }
     return function (arr) {
       return _.slice(arr, skip, end);
     };

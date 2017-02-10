@@ -29,11 +29,12 @@ var SocketController = module.exports = {
   },
 
   message: function (socket, args) {
-    var Message = app.remove.Message,
+    var Message = app.models.Message,
         msg = args[1] || {},
         client = socket.sock;
 
     msg.sender = client.user;
+    msg.time = Date.now();
 
     Message.create(msg)
       .then(function (message) {
@@ -41,12 +42,13 @@ var SocketController = module.exports = {
         client.to(message.receiver.toString()).emit('message', [message]);
       })
       .catch(function (err) {
+        log.verbose('SocketController::message fail', err.message);
         client.emit('message:fail', err.message);
       });
   },
 
   receive: function (socket) {
-    var Message = app.remove.Message,
+    var Message = app.models.Message,
         client = socket.sock;
 
     Message.find({ receiver: client.user })
@@ -57,18 +59,19 @@ var SocketController = module.exports = {
   },
 
   ack: function (socket, args) {
-    var Message = app.remove.Message,
+    var Message = app.models.Message,
         acks = args[1] || {},
         client = socket.sock;
 
     Message.remove({
-      receiver: client.user,
-      _id: { $in: acks }
-    })
+        receiver: client.user,
+        _id: { $in: acks }
+      })
       .then(function (rst) {
         client.emit('ack:success', rst);
       })
       .catch(function (err) {
+        log.verbose('SocketController::ack fail', err.message);
         client.emit('ack:fail', err.message);
       });
   },
