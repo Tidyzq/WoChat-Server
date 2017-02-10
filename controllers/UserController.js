@@ -4,6 +4,25 @@ var passport = require('passport'),
 module.exports = {
 
   /**
+   * 检查访问的用户是否存在
+   */
+  hasUser: function (req, res, next) {
+    var User = app.models.User;
+    User.findOne({ _id: req.params.id })
+      .lean()
+      .then(function (user) {
+        if (!user) throw Error('No Such User');
+      })
+      .then(function () {
+        next();
+      })
+      .catch(function (err) {
+        log.verbose('UserController.hasUser ::', err.message);
+        res.notFound();
+      });
+  },
+
+  /**
    * 检查是否是用户自身
    */
   isSelf: function (req, res, next) {
@@ -46,6 +65,32 @@ module.exports = {
       .catch(function (err) {
         log.verbose('UserController::findUser', err.message);
         res.notFound(err.message);
+      });
+  },
+
+  search: function (req, res, next) {
+    var User = app.models.User,
+        utils = app.services.utils,
+        search = req.query.search,
+        sort = req.query.sort,
+        skip = req.query.sort,
+        limit = req.query.sort;
+
+    User.find({
+        $or: [
+          { username: new RegExp(search, 'i') },
+          { nickname: new RegExp(search, 'i') },
+        ]
+      })
+      .lean()
+      .then(utils.sort(sort))
+      .then(utils.slice(skip, limit))
+      .then(function (users) {
+        res.ok(users);
+      })
+      .catch(function (err) {
+        log.verbose('UserController::search', err.message);
+        res.badRequest(err.message);
       });
   },
 
@@ -309,6 +354,105 @@ module.exports = {
       .catch(function (err) {
         log.verbose('UserController.getContact ::', err.message);
         res.notFound(err.message);
+      });
+  },
+
+  /**
+   * 发送邀请
+   */
+  sendInvitation: function (req, res, next) {
+    var Message = app.models.Message,
+        tokenService = app.services.token,
+        message = req.body.message;
+
+    var invitationToken = tokenService.createInvitationToken(req.user, req.params.id, message);
+    var msg = {
+      sender: req.user,
+      receiver: req.params.id,
+      content: invitationToken,
+      type: 1,
+      time: Date.now()
+    };
+
+    Message.create(msg)
+      .then(function (message) {
+        res.created();
+      })
+      .catch(function (err) {
+        log.verbose('UserController::sendInvitation', err.message);
+        res.badRequest(err.message);
+      });
+  },
+
+  /**
+   * 确认邀请
+   */
+  acceptInvitation: function (req, res, next) {
+    var User = app.models.User,
+        Message = app.models.Message,
+        socket = app.socket,
+        tokenService = app.services.token,
+        invitationToken = req.body.invitation;
+
+    var decodedInvitation;
+
+    var findWithContact = function (id) {
+      return User.findOne({ _id: id })
+        .select('contacts')
+        .then(function (user) {
+          if (user) return user;
+          throw new Error('User Not Found');
+        });
+    };
+
+    var addToContacts = function (user, contact) {
+      var findRst = _.filter(user.contacts, function (doc) {
+        return doc.contact.toString() == contact;
+      });
+      if (findRst.length) return user;
+      user.contacts.push({
+        contact: contact
+      });
+      user.save();
+      return user;
+    };
+
+    var sendHello = function (sender, receiver, content) {
+      var msg = {
+        sender: sender,
+        receiver: receiver,
+        content: content,
+        time: Date.now()
+      };
+      return Message.create(msg);
+    };
+
+    tokenService.verifyInvitationToken(invitationToken)
+      .then(function (invitation) {
+        decodedInvitation = invitation;
+        return Promise.props({
+          sender: findWithContact(invitation.sender),
+          receiver: findWithContact(invitation.receiver),
+        });
+      })
+      .then(function (users) {
+        return {
+          sender: addToContacts(users.sender, users.receiver._id),
+          receiver: addToContacts(users.receiver, users.sender._id),
+        };
+      })
+      .then(function (users) {
+        return Promise.props({
+          sender: sendHello(users.sender._id, users.receiver._id, decodedInvitation.message),
+          receiver: sendHello(users.receiver._id, users.sender._id, 'hello'),
+        });
+      })
+      .then(function () {
+        res.ok();
+      })
+      .catch(function (err) {
+        log.verbose('UserController.acceptInvitation ::', err.message);
+        res.badRequest(err.message);
       });
   },
 

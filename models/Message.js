@@ -48,4 +48,11 @@ var messageSchema = new Schema({
     versionKey: false
 });
 
+messageSchema.pre('save', function (next) {
+  var socket = app.socket,
+      msg = this;
+  socket.to(msg.receiver.toString()).emit('message', [msg]);
+  next();
+});
+
 var Message =  module.exports = mongoose.model('Message', messageSchema);

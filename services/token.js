@@ -35,15 +35,16 @@ var tokenService = module.exports = {
    * 产生 access token
    */
   createAccessToken: function (user) {
+    var _config = tokenConfig.types.access;
     return jwt.sign(
       {
         user: user._id,
-        type: tokenConfig.accessTokenType,
+        type: _config.typename,
       },
       tokenConfig.secret,
       {
         algorithm: tokenConfig.algorithm,
-        expiresIn: tokenConfig.accessTokenExpires,
+        expiresIn: _config.expires,
         // issuer: tokenConfig.issuer,
         // audience: tokenConfig.audience
       }
@@ -54,10 +55,11 @@ var tokenService = module.exports = {
    * 验证 access token
    */
   verifyAccessToken: function (token) {
+    var _config = tokenConfig.types.access;
     return new Promise(function (resolve, reject) {
       jwt.verify(token, tokenConfig.secret, function (err, decoded) {
         if (err) return reject(err);
-        if (decoded.type != tokenConfig.accessTokenType) return reject(Error('Not Access Token'));
+        if (decoded.type != _config.typename) return reject(Error('Not Access Token'));
         resolve(decoded);
       });
     });
@@ -67,15 +69,16 @@ var tokenService = module.exports = {
    * 产生 refresh token
    */
   createRefreshToken: function (user) {
+    var _config = tokenConfig.types.refresh;
     return jwt.sign(
       {
         user: user,
-        type: tokenConfig.refreshTokenType,
+        type: _config.typename,
       },
       tokenConfig.secret,
       {
         algorithm: tokenConfig.algorithm,
-        expiresIn: tokenConfig.refreshTokenExpires,
+        expiresIn: _config.expires,
         // issuer: tokenConfig.issuer,
         // audience: tokenConfig.audience
       }
@@ -86,10 +89,47 @@ var tokenService = module.exports = {
    * 验证 refresh token
    */
   verifyRefreshToken: function (token) {
+    var _config = tokenConfig.types.refresh;
     return new Promise(function (resolve, reject) {
       jwt.verify(token, tokenConfig.secret, function (err, decoded) {
         if (err) return reject(err);
-        if (decoded.type != tokenConfig.refreshTokenType) return reject(Error('Not Refresh Token'));
+        if (decoded.type != _config.typename) return reject(Error('Not Refresh Token'));
+        resolve(decoded);
+      });
+    });
+  },
+
+  /**
+   * 创建 invitation token
+   */
+  createInvitationToken: function (sender, receiver, message) {
+    var _config = tokenConfig.types.invitation;
+    return jwt.sign(
+      {
+        sender: sender,
+        receiver: receiver,
+        message: message,
+        type: _config.typename,
+      },
+      tokenConfig.secret,
+      {
+        algorithm: tokenConfig.algorithm,
+        expiresIn: _config.expires,
+        // issuer: tokenConfig.issuer,
+        // audience: tokenConfig.audience
+      }
+    );
+  },
+
+  /**
+   * 验证 invitation token
+   */
+  verifyInvitationToken: function (token) {
+    var _config = tokenConfig.types.invitation;
+    return new Promise(function (resolve, reject) {
+      jwt.verify(token, tokenConfig.secret, function (err, decoded) {
+        if (err) return reject(err);
+        if (decoded.type != _config.typename) return reject(Error('Not Invitation Token'));
         resolve(decoded);
       });
     });

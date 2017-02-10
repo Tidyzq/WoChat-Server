@@ -39,6 +39,9 @@ module.exports.http = {
         },
       },
       '/users': {
+        '/search': {
+          get: 'UserController.search',
+        },
         '/:id': {
           get: ['AuthController.hasAccessToken', 'UserController.findUser'],
           put: ['AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.update'],
@@ -57,6 +60,12 @@ module.exports.http = {
               delete: ['AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.deleteContact'],
             },
           },
+          '/invitation': {
+            post: ['AuthController.hasAccessToken', 'UserController.hasUser', 'UserController.sendInvitation'],
+            '/accept': {
+              post: ['AuthController.hasAccessToken', 'UserController.isSelf', 'UserController.acceptInvitation'],
+            }
+          }
           // '/messages': {
           //   get: ['AuthController.hasJwt', 'UserController.isSelf', 'MessageController.receive'],
           // },

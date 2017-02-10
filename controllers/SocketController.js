@@ -39,7 +39,6 @@ var SocketController = module.exports = {
     Message.create(msg)
       .then(function (message) {
         client.emit('message:success', message.toObject());
-        client.to(message.receiver.toString()).emit('message', [message]);
       })
       .catch(function (err) {
         log.verbose('SocketController::message fail', err.message);

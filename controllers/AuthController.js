@@ -31,8 +31,10 @@ module.exports = {
       // 创建成功，返回创建用户
       .then(function (created) {
         return User.findOne({ _id: created._id })
-          .lean()
+          .select('contacts')
           .then(function (user) {
+            user.contacts.push({ contact: user._id });
+            user.save();
             res.ok(user);
           });
       })
