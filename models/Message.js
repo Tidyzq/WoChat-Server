@@ -2,6 +2,7 @@ var mongoose = require('mongoose');
 // var V = require('../utils/validator');
 var Schema = mongoose.Schema;
 var ObjectId = Schema.Types.ObjectId;
+var textType = app.get('message').types.text;
 
 var messageSchema = new Schema({
     // _id: ObjectId,
@@ -30,7 +31,7 @@ var messageSchema = new Schema({
     type: {
       type: Number,
       required: true,
-      default: 0,
+      default: textType,
       // validate: V.messageType
     },
     content: {
