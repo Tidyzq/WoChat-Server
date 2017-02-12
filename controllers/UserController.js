@@ -364,7 +364,7 @@ module.exports = {
     var Message = app.models.Message,
         tokenService = app.services.token,
         message = req.body.message,
-        invitationType = app.get('message').types.invitaion;
+        invitationType = app.get('message').types.invitation;
 
     var invitationToken = tokenService.createInvitationToken(req.user, req.params.id, message);
     var msg = {
