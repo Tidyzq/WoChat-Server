@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt');
+var path = require('path');
 // var V = require('../utils/validator');
 // var config = require('../utils/config');
 var Schema = mongoose.Schema;
@@ -84,7 +85,10 @@ var userSchema = new Schema({
     },
     avatar: {
       type: String,
-      default: 'http:localhost/avatar/default.png',
+      default: 'http://' + app.get('hostname') + ':' + app.get('port') + '/' +
+                path.relative(path.join(app.get('path'), app.get('static')),
+                              path.join(app.get('path'), app.get('image').path)) +
+                '/default.png',
       // default: config.url + '/avatar/default.png',
       required: true,
       // validate: V.avatar
